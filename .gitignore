@@ -1,0 +1,18 @@
+# macOS
+.DS_Store
+
+# Xcode user data / derived files
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# SwiftPM
+.build/
+
+# Runtime/build artifacts
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Env / secrets
+.env
