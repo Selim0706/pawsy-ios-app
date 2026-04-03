@@ -272,6 +272,8 @@ private struct AddReminderSheet: View {
     @State private var category: ReminderCategory = .vaccination
     @State private var date: Date = .now
     @State private var note: String = ""
+    @State private var showCategorySheet = false
+    @State private var showDateSheet = false
 
     var body: some View {
         ZStack {
@@ -290,19 +292,21 @@ private struct AddReminderSheet: View {
                         .padding(12)
                         .bubble(radius: 16)
 
-                    Picker("Category", selection: $category) {
-                        ForEach(ReminderCategory.allCases) { item in
-                            Text(item.title).tag(item)
-                        }
+                    BubbleSelectionRow(
+                        title: "Category",
+                        value: category.title,
+                        icon: category.icon
+                    ) {
+                        showCategorySheet = true
                     }
-                    .pickerStyle(.segmented)
 
-                    DatePicker("Date & Time", selection: $date)
-                        .datePickerStyle(.compact)
-                        .font(.pawsy(14, .medium))
-                        .foregroundStyle(PawsyTheme.textPrimary)
-                        .padding(12)
-                        .bubble(radius: 16)
+                    BubbleSelectionRow(
+                        title: "Date & Time",
+                        value: date.formatted(date: .abbreviated, time: .shortened),
+                        icon: "calendar"
+                    ) {
+                        showDateSheet = true
+                    }
 
                     TextField("Notes (optional)", text: $note, axis: .vertical)
                         .lineLimit(3...5)
@@ -337,6 +341,26 @@ private struct AddReminderSheet: View {
             if let target = Calendar.current.date(from: components) {
                 date = target
             }
+        }
+        .sheet(isPresented: $showCategorySheet) {
+            SelectionListSheet(
+                title: "Reminder Category",
+                options: ReminderCategory.allCases.map(\.title),
+                selected: category.title
+            ) { picked in
+                if let next = ReminderCategory.allCases.first(where: { $0.title == picked }) {
+                    category = next
+                }
+            }
+            .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $showDateSheet) {
+            DateSelectionSheet(
+                title: "Reminder Date",
+                date: $date,
+                displayedComponents: [.date, .hourAndMinute]
+            )
+            .presentationDetents([.large])
         }
     }
 }

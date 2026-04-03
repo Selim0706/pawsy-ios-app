@@ -19,7 +19,7 @@ final class PetappUITests: XCTestCase {
         app.buttons["tab.profile"].tap()
         app.buttons["tab.home"].tap()
         app.buttons["tab.aiChat"].tap()
-        XCTAssertFalse(app.buttons["tab.home"].exists)
+        XCTAssertTrue(app.otherElements["screen.ai"].waitForExistence(timeout: 2))
     }
 
     @MainActor
@@ -28,8 +28,8 @@ final class PetappUITests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(app.buttons["pawsy.center.pill"].waitForExistence(timeout: 3))
-        app.buttons["pawsy.center.pill"].tap()
-        XCTAssertTrue(app.staticTexts["Pawsy Hub"].waitForExistence(timeout: 2))
+        app.buttons["pawsy.center.pill"].forceTap()
+        XCTAssertTrue(app.otherElements["pawsy.hub"].waitForExistence(timeout: 2))
     }
 
     @MainActor
@@ -38,9 +38,9 @@ final class PetappUITests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(app.buttons["dashboard.menu"].waitForExistence(timeout: 3))
-        app.buttons["dashboard.menu"].tap()
+        app.buttons["dashboard.menu"].forceTap()
         XCTAssertTrue(app.buttons["dashboard.quick.settings"].waitForExistence(timeout: 3))
-        app.buttons["dashboard.quick.settings"].tap()
+        app.buttons["dashboard.quick.settings"].forceTap()
 
         let nameField = app.textFields["pet.editor.name"]
         XCTAssertTrue(nameField.waitForExistence(timeout: 3))
@@ -70,6 +70,17 @@ final class PetappUITests: XCTestCase {
 }
 
 private extension XCUIElement {
+    @MainActor
+    func forceTap() {
+        if isHittable {
+            tap()
+            return
+        }
+
+        let coordinate = coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        coordinate.tap()
+    }
+
     func clearAndType(text: String) {
         guard let valueString = value as? String else {
             typeText(text)

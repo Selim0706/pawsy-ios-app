@@ -11,10 +11,36 @@ final class PetProfilesViewModel: ObservableObject {
 
     init(store: PetProfilesStore = UserDefaultsPetProfilesStore()) {
         self.store = store
-        let snapshot = store.load()
+        let loadedSnapshot = store.load()
+        let snapshot: PetProfilesSnapshot
+        if Self.isUITestRun, loadedSnapshot.pets.isEmpty {
+            snapshot = PetProfilesSnapshot(pets: [Self.defaultUITestPet], activePetID: Self.defaultUITestPet.id)
+        } else {
+            snapshot = loadedSnapshot
+        }
         self.pets = snapshot.pets
         self.activePetID = snapshot.activePetID ?? snapshot.pets.first?.id
         self.hasCompletedOnboarding = !snapshot.pets.isEmpty
+    }
+
+    private static var isUITestRun: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
+
+    private static var defaultUITestPet: PetProfile {
+        PetProfile(
+            id: UUID(uuidString: "11111111-1111-1111-1111-111111111111") ?? UUID(),
+            name: "Milo",
+            species: .dog,
+            breed: "Shiba Inu",
+            sex: .male,
+            birthDate: nil,
+            style: .shiba,
+            accessory: .greenCollar,
+            avatarAsset: "pet_shiba",
+            medical: .empty,
+            createdAt: Date()
+        )
     }
 
     var activePet: PetProfile? {

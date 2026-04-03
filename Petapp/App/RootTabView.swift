@@ -170,6 +170,7 @@ private struct AppSettingsSheet: View {
     let onClearChatHistory: () -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var showClearChatConfirm = false
+    @State private var showThemeSheet = false
 
     var body: some View {
         ZStack {
@@ -194,12 +195,13 @@ private struct AppSettingsSheet: View {
                                 .font(.pawsy(16, .semibold))
                                 .foregroundStyle(PawsyTheme.textPrimary)
 
-                            Picker("Theme", selection: $preferences.themeMode) {
-                                ForEach(AppThemeMode.allCases) { mode in
-                                    Text(mode.title).tag(mode)
-                                }
+                            BubbleSelectionRow(
+                                title: "Theme",
+                                value: preferences.themeMode.title,
+                                icon: "paintbrush"
+                            ) {
+                                showThemeSheet = true
                             }
-                            .pickerStyle(.segmented)
                         }
                     }
 
@@ -208,12 +210,16 @@ private struct AppSettingsSheet: View {
                             Text("Behavior")
                                 .font(.pawsy(16, .semibold))
                                 .foregroundStyle(PawsyTheme.textPrimary)
-                            Toggle("Medical reminders", isOn: $preferences.remindersEnabled)
-                                .font(.pawsy(14, .semibold))
-                                .tint(PawsyTheme.accentEmerald)
-                            Toggle("Haptics", isOn: $preferences.hapticsEnabled)
-                                .font(.pawsy(14, .semibold))
-                                .tint(PawsyTheme.accentEmerald)
+                            BubbleToggleRow(
+                                title: "Medical reminders",
+                                subtitle: "Keep reminder cards and day markers active",
+                                isOn: $preferences.remindersEnabled
+                            )
+                            BubbleToggleRow(
+                                title: "Haptics",
+                                subtitle: "Use tactile feedback for pet actions and controls",
+                                isOn: $preferences.hapticsEnabled
+                            )
                         }
                     }
 
@@ -247,6 +253,18 @@ private struct AppSettingsSheet: View {
             }
         } message: {
             Text("This action removes all saved AI chat messages for the active pet.")
+        }
+        .sheet(isPresented: $showThemeSheet) {
+            SelectionListSheet(
+                title: "Theme",
+                options: AppThemeMode.allCases.map(\.title),
+                selected: preferences.themeMode.title
+            ) { picked in
+                if let next = AppThemeMode.allCases.first(where: { $0.title == picked }) {
+                    preferences.themeMode = next
+                }
+            }
+            .presentationDetents([.medium])
         }
     }
 }

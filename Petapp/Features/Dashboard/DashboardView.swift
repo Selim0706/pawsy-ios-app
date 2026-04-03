@@ -372,6 +372,8 @@ private struct PetCustomizationSheet: View {
     @State private var name: String
     @State private var style: PetStyle
     @State private var accessory: PetAccessory
+    @State private var showStyleSheet = false
+    @State private var showAccessorySheet = false
 
     init(viewModel: DashboardViewModel) {
         self.viewModel = viewModel
@@ -403,26 +405,24 @@ private struct PetCustomizationSheet: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Style")
                                 .font(.pawsy(14, .semibold))
-                            Picker("Style", selection: $style) {
-                                ForEach(PetStyle.allCases) { value in
-                                    Text("\(value.emoji) \(value.title)").tag(value)
-                                }
+                            BubbleSelectionRow(
+                                title: "Style",
+                                value: "\(style.emoji) \(style.title)"
+                            ) {
+                                showStyleSheet = true
                             }
-                            .pickerStyle(.segmented)
                             .accessibilityIdentifier("pet.editor.style")
                         }
 
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Accessory")
                                 .font(.pawsy(14, .semibold))
-                            Picker("Accessory", selection: $accessory) {
-                                ForEach(PetAccessory.allCases) { value in
-                                    Text(value.title).tag(value)
-                                }
+                            BubbleSelectionRow(
+                                title: "Accessory",
+                                value: accessory.title
+                            ) {
+                                showAccessorySheet = true
                             }
-                            .pickerStyle(.menu)
-                            .padding(12)
-                            .bubble(radius: 14, fill: Color.white.opacity(0.85))
                             .accessibilityIdentifier("pet.editor.accessory")
                         }
 
@@ -461,6 +461,30 @@ private struct PetCustomizationSheet: View {
                     .accessibilityIdentifier("pet.editor.save")
                 }
             }
+        }
+        .sheet(isPresented: $showStyleSheet) {
+            SelectionListSheet(
+                title: "Pet Style",
+                options: PetStyle.allCases.map { "\($0.emoji) \($0.title)" },
+                selected: "\(style.emoji) \(style.title)"
+            ) { picked in
+                if let next = PetStyle.allCases.first(where: { picked.contains($0.title) }) {
+                    style = next
+                }
+            }
+            .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $showAccessorySheet) {
+            SelectionListSheet(
+                title: "Accessory",
+                options: PetAccessory.allCases.map(\.title),
+                selected: accessory.title
+            ) { picked in
+                if let next = PetAccessory.allCases.first(where: { $0.title == picked }) {
+                    accessory = next
+                }
+            }
+            .presentationDetents([.medium])
         }
     }
 }

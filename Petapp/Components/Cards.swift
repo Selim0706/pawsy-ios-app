@@ -201,3 +201,183 @@ struct PetCard: View {
         .bubble(radius: 20, fill: isActive ? PawsyTheme.accentGreen.opacity(0.55) : Color.white.opacity(0.72))
     }
 }
+
+struct BubbleSelectionRow: View {
+    let title: String
+    let value: String
+    var valueColor: Color = PawsyTheme.textPrimary
+    var icon: String = "chevron.down"
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.pawsy(12, .semibold))
+                        .foregroundStyle(PawsyTheme.textSecondary)
+                    Text(value)
+                        .font(.pawsy(15, .semibold))
+                        .foregroundStyle(valueColor)
+                }
+
+                Spacer()
+
+                Image(systemName: icon)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(PawsyTheme.textSecondary)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 11)
+            .bubble(radius: 14, fill: Color.white.opacity(0.78))
+        }
+        .buttonStyle(PressableBubbleButtonStyle())
+    }
+}
+
+struct BubbleToggleRow: View {
+    let title: String
+    let subtitle: String?
+    @Binding var isOn: Bool
+
+    var body: some View {
+        Button {
+            withAnimation(.spring(response: 0.26, dampingFraction: 0.82)) {
+                isOn.toggle()
+            }
+        } label: {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.pawsy(15, .semibold))
+                        .foregroundStyle(PawsyTheme.textPrimary)
+
+                    if let subtitle, !subtitle.isEmpty {
+                        Text(subtitle)
+                            .font(.pawsy(12, .medium))
+                            .foregroundStyle(PawsyTheme.textSecondary)
+                    }
+                }
+
+                Spacer()
+
+                ZStack(alignment: isOn ? .trailing : .leading) {
+                    Capsule()
+                        .fill(isOn ? PawsyTheme.accentGreen.opacity(0.9) : Color.white.opacity(0.9))
+                        .frame(width: 54, height: 30)
+                        .overlay(
+                            Capsule()
+                                .stroke(PawsyTheme.glassStroke, lineWidth: 1)
+                        )
+
+                    Circle()
+                        .fill(Color.white.opacity(0.95))
+                        .frame(width: 24, height: 24)
+                        .padding(3)
+                        .shadow(color: Color.black.opacity(0.12), radius: 3, x: 0, y: 2)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 11)
+            .bubble(radius: 14, fill: Color.white.opacity(0.78))
+        }
+        .buttonStyle(PressableBubbleButtonStyle())
+    }
+}
+
+struct SelectionListSheet: View {
+    let title: String
+    let options: [String]
+    let selected: String
+    let onPick: (String) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var query = ""
+
+    private var filtered: [String] {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return options }
+        return options.filter { $0.localizedCaseInsensitiveContains(trimmed) }
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                AppBackground()
+
+                VStack(spacing: 10) {
+                    TextField("Search", text: $query)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .bubble(radius: 14, fill: Color.white.opacity(0.82))
+
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 8) {
+                            ForEach(filtered, id: \.self) { item in
+                                Button {
+                                    onPick(item)
+                                    dismiss()
+                                } label: {
+                                    HStack {
+                                        Text(item)
+                                            .font(.pawsy(15, .semibold))
+                                            .foregroundStyle(PawsyTheme.textPrimary)
+                                        Spacer()
+                                        if item == selected {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .foregroundStyle(PawsyTheme.accentEmerald)
+                                        }
+                                    }
+                                    .padding(12)
+                                    .bubble(radius: 14, fill: Color.white.opacity(0.74))
+                                }
+                                .buttonStyle(PressableBubbleButtonStyle())
+                            }
+                        }
+                    }
+                }
+                .padding(PawsyTheme.horizontalPadding)
+            }
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+}
+
+struct DateSelectionSheet: View {
+    let title: String
+    @Binding var date: Date
+    var displayedComponents: DatePickerComponents = [.date]
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                AppBackground()
+
+                VStack(spacing: 18) {
+                    DatePicker(
+                        title,
+                        selection: $date,
+                        displayedComponents: displayedComponents
+                    )
+                    .datePickerStyle(.graphical)
+                    .padding(12)
+                    .bubble(radius: 22, fill: Color.white.opacity(0.78))
+
+                    Button("Done") { dismiss() }
+                        .font(.pawsy(15, .bold))
+                        .foregroundStyle(PawsyTheme.textPrimary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .bubbleStrong(radius: 16, fill: PawsyTheme.accentGreen.opacity(0.82))
+                        .buttonStyle(PressableBubbleButtonStyle())
+                }
+                .padding(PawsyTheme.horizontalPadding)
+            }
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+}

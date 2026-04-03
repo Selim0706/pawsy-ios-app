@@ -106,6 +106,7 @@ struct PawsyHubSheet: View {
                     .padding(18)
                 }
             }
+            .accessibilityIdentifier("pawsy.hub")
             .navigationTitle("Daily Tasks")
             .navigationBarTitleDisplayMode(.inline)
         }

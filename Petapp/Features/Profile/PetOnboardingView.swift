@@ -20,6 +20,7 @@ struct PetOnboardingView: View {
     @State private var showSexSheet = false
     @State private var showStyleSheet = false
     @State private var showAccessorySheet = false
+    @State private var showBirthDateSheet = false
 
     private enum FirstRunStep: Int, CaseIterable {
         case welcome
@@ -102,6 +103,16 @@ struct PetOnboardingView: View {
                 }
             }
             .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $showBirthDateSheet) {
+            DateSelectionSheet(
+                title: "Birth Date",
+                date: Binding(
+                    get: { draft.birthDate ?? .now },
+                    set: { draft.birthDate = $0 }
+                )
+            )
+            .presentationDetents([.large])
         }
     }
 
@@ -356,19 +367,21 @@ struct PetOnboardingView: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                Toggle("Known birth date", isOn: $birthDateEnabled)
-                    .tint(PawsyTheme.accentEmerald)
+                BubbleToggleRow(
+                    title: "Known birth date",
+                    subtitle: birthDateEnabled ? "Birth date is included in this pet profile" : "You can skip this and add it later",
+                    isOn: $birthDateEnabled
+                )
                 if birthDateEnabled {
-                    DatePicker("Birth date", selection: Binding(
-                        get: { draft.birthDate ?? .now },
-                        set: { draft.birthDate = $0 }
-                    ), displayedComponents: .date)
+                    BubbleSelectionRow(
+                        title: "Birth date",
+                        value: (draft.birthDate ?? .now).formatted(date: .abbreviated, time: .omitted),
+                        icon: "calendar"
+                    ) {
+                        showBirthDateSheet = true
+                    }
                 }
             }
-            .font(.pawsy(13, .semibold))
-            .foregroundStyle(PawsyTheme.textPrimary)
-            .padding(12)
-            .bubble(radius: 14, fill: Color.white.opacity(0.78))
         }
         .padding(16)
         .bubble(radius: 24, fill: Color.white.opacity(0.58))
@@ -530,26 +543,7 @@ struct PetOnboardingView: View {
     }
 
     private func selectionRow(title: String, value: String, valueColor: Color = PawsyTheme.textPrimary, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.pawsy(12, .semibold))
-                        .foregroundStyle(PawsyTheme.textSecondary)
-                    Text(value)
-                        .font(.pawsy(15, .semibold))
-                        .foregroundStyle(valueColor)
-                }
-                Spacer()
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(PawsyTheme.textSecondary)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 11)
-            .bubble(radius: 14, fill: Color.white.opacity(0.78))
-        }
-        .buttonStyle(PressableBubbleButtonStyle())
+        BubbleSelectionRow(title: title, value: value, valueColor: valueColor, action: action)
     }
 
     private func medicalInput(_ title: String, text: Binding<String>) -> some View {
@@ -577,64 +571,5 @@ struct PetOnboardingView: View {
                 .foregroundStyle(PawsyTheme.textPrimary)
         }
         .padding(.vertical, 2)
-    }
-}
-
-private struct SelectionListSheet: View {
-    let title: String
-    let options: [String]
-    let selected: String
-    let onPick: (String) -> Void
-
-    @Environment(\.dismiss) private var dismiss
-    @State private var query = ""
-
-    private var filtered: [String] {
-        if query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return options
-        }
-        return options.filter { $0.localizedCaseInsensitiveContains(query) }
-    }
-
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                AppBackground()
-                VStack(spacing: 10) {
-                    TextField("Search", text: $query)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 10)
-                        .bubble(radius: 14, fill: Color.white.opacity(0.82))
-
-                    ScrollView(showsIndicators: false) {
-                        VStack(spacing: 8) {
-                            ForEach(filtered, id: \.self) { item in
-                                Button {
-                                    onPick(item)
-                                    dismiss()
-                                } label: {
-                                    HStack {
-                                        Text(item)
-                                            .font(.pawsy(15, .semibold))
-                                            .foregroundStyle(PawsyTheme.textPrimary)
-                                        Spacer()
-                                        if item == selected {
-                                            Image(systemName: "checkmark.circle.fill")
-                                                .foregroundStyle(PawsyTheme.accentEmerald)
-                                        }
-                                    }
-                                    .padding(12)
-                                    .bubble(radius: 14, fill: Color.white.opacity(0.74))
-                                }
-                                .buttonStyle(PressableBubbleButtonStyle())
-                            }
-                        }
-                    }
-                }
-                .padding(PawsyTheme.horizontalPadding)
-            }
-            .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
-        }
     }
 }
